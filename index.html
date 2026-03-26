@@ -76,10 +76,25 @@ body {
 }
 .main { max-width: 1120px; margin: 0 auto; padding: 28px 32px 60px; }
 
-.filter-bar {
-  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto;
-  gap: 12px; align-items: end; margin-bottom: 32px;
+/* Tabs */
+.tab-bar { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border-light); }
+.tab-btn {
+  padding: 10px 24px; font-family: Arial, sans-serif; font-size: 13px; font-weight: bold;
+  color: var(--texto-muted); background: none; border: none; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.5px; text-transform: uppercase;
 }
+.tab-btn:hover { color: var(--texto-secundario); }
+.tab-btn.active { color: var(--verde-lima); border-bottom-color: var(--verde-lima); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 32px;
+}
+.filter-bar .filter-group { flex: 1; min-width: 120px; max-width: 180px; }
+.filter-bar .filter-group.narrow { max-width: 130px; min-width: 90px; }
+.filter-bar .filter-group.wide { min-width: 160px; max-width: 220px; }
 .filter-group label {
   display: block; font-size: 10px; font-weight: bold; color: var(--texto-muted);
   text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px;
@@ -216,6 +231,29 @@ body {
   font-size: 10px; color: var(--texto-muted); font-family: 'Courier New', monospace;
 }
 
+/* Comparison tab */
+.cmp-selectors { display: flex; gap: 16px; align-items: end; margin-bottom: 24px; flex-wrap: wrap; }
+.cmp-slot {
+  flex: 1; min-width: 280px; background: var(--card-bg); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.cmp-slot h4 { font-size: 10px; font-weight: bold; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+.cmp-slot select { width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); margin-bottom: 8px; appearance: none; background: #fff; cursor: pointer; }
+.cmp-add-btn {
+  width: 44px; height: 44px; border-radius: 50%; background: var(--verde-lima); color: #fff;
+  border: none; font-size: 24px; cursor: pointer; font-weight: bold; transition: transform 0.1s;
+  flex-shrink: 0;
+}
+.cmp-add-btn:hover { transform: scale(1.08); }
+.cmp-remove { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--texto-muted); cursor: pointer; font-size: 16px; }
+.cmp-remove:hover { color: var(--vermelho); }
+.cmp-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+.cmp-table th, .cmp-table td { padding: 12px 16px; text-align: right; font-size: 13px; border-bottom: 1px solid var(--border-light); }
+.cmp-table th:first-child, .cmp-table td:first-child { text-align: left; }
+.cmp-table th { font-size: 10px; font-weight: bold; color: var(--texto-muted); text-transform: uppercase; letter-spacing: 1px; background: var(--card-bg); }
+.cmp-table .best { color: #6B8A12; font-weight: bold; }
+.cmp-table .worst { color: var(--vermelho); }
+
 .footer-bar {
   background: var(--preto-carvao); border-top: 3px solid var(--verde-lima);
   padding: 16px 32px; margin-top: 20px;
@@ -239,6 +277,7 @@ body {
   .charts-row { grid-template-columns: 1fr; }
   .main { padding: 20px 16px 40px; }
   .header-inner { padding: 0 16px; }
+  .tab-btn { padding: 8px 14px; font-size: 11px; }
 }
 </style>
 </head>
@@ -262,6 +301,14 @@ body {
   </div>
 </header>
 <main class="main">
+  <!-- Tab navigation -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('consulta')">Consulta</button>
+    <button class="tab-btn" onclick="switchTab('comparativo')">Comparativo</button>
+  </div>
+
+  <!-- TAB 1: Consulta -->
+  <div id="tab-consulta" class="tab-content active">
   <div class="filter-bar animate">
     <div class="filter-group">
       <label>Marca</label>
@@ -270,54 +317,69 @@ body {
         <option>Honda</option><option>Hyundai</option><option>Stellantis (Fiat)</option><option>Stellantis (Jeep)</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div class="filter-group wide">
       <label>Modelo</label>
-      <select id="sel-modelo">
-        <option>Corolla Cross XRX Hybrid</option><option>Corolla Altis Hybrid</option>
-        <option>Hilux SRX</option><option>SW4 SRX Diamond</option><option>Yaris Sedã XLS</option>
+      <select id="sel-modelo"></select>
+    </div>
+    <div class="filter-group narrow">
+      <label>Tipo</label>
+      <select id="sel-tipo">
+        <option value="all">Todos</option>
+        <option>SUV</option><option>Sedan</option><option>Hatch</option><option>Pickup</option><option>SUV Coupé</option>
+      </select>
+    </div>
+    <div class="filter-group narrow">
+      <label>UF</label>
+      <select id="sel-estado">
+        <option value="all">Todos</option>
       </select>
     </div>
     <div class="filter-group">
       <label>Cidade</label>
-      <select id="sel-cidade">
-        <option>Rio de Janeiro — RJ</option><option>São Paulo — SP</option>
-        <option>Belo Horizonte — MG</option><option>Curitiba — PR</option><option>Salvador — BA</option>
-      </select>
+      <select id="sel-cidade"></select>
     </div>
     <div class="filter-group">
+      <label>Banco</label>
+      <select id="sel-banco">
+        <option value="all">Todos</option>
+        <option value="tier1">Tier 1</option>
+        <option value="tier2">Tier 2</option>
+      </select>
+    </div>
+    <div class="filter-group narrow">
       <label>Período</label>
       <select id="sel-periodo">
-        <option>Últimos 12 meses</option><option>Últimos 6 meses</option><option>Últimos 3 meses</option><option>Último mês</option><option>Última semana</option>
+        <option>12 meses</option><option>6 meses</option><option>3 meses</option><option>Último mês</option>
       </select>
     </div>
     <button class="btn-search" onclick="runQuery()">CONSULTAR</button>
   </div>
   <div id="results">
     <div class="results-header animate d1">
-      <h2 id="res-title">Toyota Corolla Cross XRX Hybrid</h2>
-      <span class="count" id="res-count">1.247 contratos</span>
+      <h2 id="res-title"></h2>
+      <span class="count" id="res-count"></span>
     </div>
-    <p class="results-sub animate d1" id="res-sub">Rio de Janeiro — RJ · Últimos 12 meses · Dados anonimizados (n ≥ 30)</p>
+    <p class="results-sub animate d1" id="res-sub"></p>
     <div class="kpi-grid">
       <div class="kpi-card lima animate d2">
         <div class="kpi-label">Valor médio do veículo</div>
-        <div class="kpi-value" id="kpi-veiculo">R$ 198.400</div>
-        <div class="kpi-sub">Mediana R$ 195.000</div>
+        <div class="kpi-value" id="kpi-veiculo">—</div>
+        <div class="kpi-sub" id="kpi-veiculo-sub"></div>
       </div>
       <div class="kpi-card neon animate d2">
         <div class="kpi-label">Valor médio financiado</div>
-        <div class="kpi-value" id="kpi-financiado">R$ 118.800</div>
-        <div class="kpi-sub">60% do valor do veículo</div>
+        <div class="kpi-value" id="kpi-financiado">—</div>
+        <div class="kpi-sub" id="kpi-financiado-sub"></div>
       </div>
       <div class="kpi-card ambar animate d3">
         <div class="kpi-label">Parcela média</div>
-        <div class="kpi-value" id="kpi-parcela">R$ 2.680</div>
-        <div class="kpi-sub">48 parcelas (mediana)</div>
+        <div class="kpi-value" id="kpi-parcela">—</div>
+        <div class="kpi-sub" id="kpi-parcela-sub"></div>
       </div>
       <div class="kpi-card vermelho animate d3">
         <div class="kpi-label">Taxa média de juros</div>
-        <div class="kpi-value" id="kpi-taxa">1,59% a.m.</div>
-        <div class="kpi-sub">≈ 20,8% a.a.</div>
+        <div class="kpi-value" id="kpi-taxa">—</div>
+        <div class="kpi-sub" id="kpi-taxa-sub"></div>
       </div>
     </div>
     <div class="section-label animate d3">DISTRIBUIÇÃO POR PERCENTIL</div>
@@ -346,6 +408,29 @@ body {
       </div>
     </div>
   </div>
+  </div>
+
+  <!-- TAB 2: Comparativo -->
+  <div id="tab-comparativo" class="tab-content">
+    <p style="font-size:12px;color:var(--texto-muted);margin-bottom:16px;">Selecione 2 ou mais modelos para comparar lado a lado. Mesmos parâmetros: preço, financiado, LTV, prazo e taxa.</p>
+    <div id="cmp-selectors" class="cmp-selectors">
+      <div class="cmp-slot" id="cmp-slot-0" style="position:relative;">
+        <h4>Modelo A</h4>
+        <select class="cmp-marca" data-idx="0"><option>Toyota</option><option>BYD</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Stellantis (Fiat)</option><option>Stellantis (Jeep)</option></select>
+        <select class="cmp-modelo" data-idx="0"></select>
+        <select class="cmp-cidade" data-idx="0"></select>
+      </div>
+      <div class="cmp-slot" id="cmp-slot-1" style="position:relative;">
+        <h4>Modelo B</h4>
+        <select class="cmp-marca" data-idx="1"><option>BYD</option><option>Toyota</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Stellantis (Fiat)</option><option>Stellantis (Jeep)</option></select>
+        <select class="cmp-modelo" data-idx="1"></select>
+        <select class="cmp-cidade" data-idx="1"></select>
+      </div>
+      <button class="cmp-add-btn" onclick="addCompareSlot()" title="Adicionar modelo">+</button>
+    </div>
+    <button class="btn-search" style="margin-bottom:24px;" onclick="runCompare()">COMPARAR</button>
+    <div id="cmp-results"></div>
+  </div>
 </main>
 <footer class="footer-bar">
   <div class="footer-inner">
@@ -354,139 +439,160 @@ body {
   </div>
 </footer>
 <script>
-/* ── Brand / Model catalog with realistic base prices (R$) and rate profiles ── */
+/* ── Brand / Model catalog with vehicle types, base prices and rate profiles ── */
 const BRAND_MODELS = {
   'Toyota': {
-    'Corolla Cross XRX Hybrid': { base: 198000, taxa: 1.59 },
-    'Corolla Altis Hybrid':     { base: 185000, taxa: 1.55 },
-    'Hilux SRX':                { base: 298000, taxa: 1.69 },
-    'SW4 SRX Diamond':          { base: 355000, taxa: 1.72 },
-    'Yaris Sedã XLS':           { base: 112000, taxa: 1.49 }
+    'Corolla Cross XRX Hybrid': { base: 198000, taxa: 1.59, tipo: 'SUV' },
+    'Corolla Altis Hybrid':     { base: 185000, taxa: 1.55, tipo: 'Sedan' },
+    'Hilux SRX':                { base: 298000, taxa: 1.69, tipo: 'Pickup' },
+    'SW4 SRX Diamond':          { base: 355000, taxa: 1.72, tipo: 'SUV' },
+    'Yaris Sedã XLS':           { base: 112000, taxa: 1.49, tipo: 'Sedan' }
   },
   'BYD': {
-    'Dolphin Mini':  { base: 100000, taxa: 1.45 },
-    'Song Plus':     { base: 185000, taxa: 1.52 },
-    'Yuan Plus':     { base: 175000, taxa: 1.50 },
-    'Seal':          { base: 260000, taxa: 1.58 }
+    'Dolphin Mini':  { base: 100000, taxa: 1.45, tipo: 'Hatch' },
+    'Song Plus':     { base: 185000, taxa: 1.52, tipo: 'SUV' },
+    'Yuan Plus':     { base: 175000, taxa: 1.50, tipo: 'SUV' },
+    'Seal':          { base: 260000, taxa: 1.58, tipo: 'Sedan' }
   },
   'Volkswagen': {
-    'Polo Track': { base: 92000,  taxa: 1.55 },
-    'T-Cross':    { base: 140000, taxa: 1.58 },
-    'Nivus':      { base: 128000, taxa: 1.56 },
-    'Amarok V6':  { base: 340000, taxa: 1.75 }
+    'Polo Track': { base: 92000,  taxa: 1.55, tipo: 'Hatch' },
+    'T-Cross':    { base: 140000, taxa: 1.58, tipo: 'SUV' },
+    'Nivus':      { base: 128000, taxa: 1.56, tipo: 'SUV Coupé' },
+    'Amarok V6':  { base: 340000, taxa: 1.75, tipo: 'Pickup' }
   },
   'Honda': {
-    'HR-V EXL':       { base: 165000, taxa: 1.52 },
-    'City Hatchback': { base: 115000, taxa: 1.48 },
-    'Civic Touring':  { base: 210000, taxa: 1.55 },
-    'ZR-V':           { base: 195000, taxa: 1.54 }
+    'HR-V EXL':       { base: 165000, taxa: 1.52, tipo: 'SUV' },
+    'City Hatchback': { base: 115000, taxa: 1.48, tipo: 'Hatch' },
+    'Civic Touring':  { base: 210000, taxa: 1.55, tipo: 'Sedan' },
+    'ZR-V':           { base: 195000, taxa: 1.54, tipo: 'SUV' }
   },
   'Hyundai': {
-    'HB20 Platinum':  { base: 98000,  taxa: 1.52 },
-    'Creta Ultimate': { base: 155000, taxa: 1.56 },
-    'Tucson':         { base: 215000, taxa: 1.60 },
-    'Santa Fe':       { base: 330000, taxa: 1.72 }
+    'HB20 Platinum':  { base: 98000,  taxa: 1.52, tipo: 'Hatch' },
+    'Creta Ultimate': { base: 155000, taxa: 1.56, tipo: 'SUV' },
+    'Tucson':         { base: 215000, taxa: 1.60, tipo: 'SUV' },
+    'Santa Fe':       { base: 330000, taxa: 1.72, tipo: 'SUV' }
   },
   'Stellantis (Fiat)': {
-    'Pulse Abarth': { base: 130000, taxa: 1.58 },
-    'Fastback':     { base: 145000, taxa: 1.60 },
-    'Toro Ultra':   { base: 175000, taxa: 1.62 },
-    'Strada Ranch': { base: 108000, taxa: 1.55 }
+    'Pulse Abarth': { base: 130000, taxa: 1.58, tipo: 'SUV' },
+    'Fastback':     { base: 145000, taxa: 1.60, tipo: 'SUV Coupé' },
+    'Toro Ultra':   { base: 175000, taxa: 1.62, tipo: 'Pickup' },
+    'Strada Ranch': { base: 108000, taxa: 1.55, tipo: 'Pickup' }
   },
   'Stellantis (Jeep)': {
-    'Compass Limited': { base: 195000, taxa: 1.62 },
-    'Commander':       { base: 280000, taxa: 1.68 },
-    'Renegade':        { base: 130000, taxa: 1.58 },
-    'Gladiator':       { base: 380000, taxa: 1.78 }
+    'Compass Limited': { base: 195000, taxa: 1.62, tipo: 'SUV' },
+    'Commander':       { base: 280000, taxa: 1.68, tipo: 'SUV' },
+    'Renegade':        { base: 130000, taxa: 1.58, tipo: 'SUV' },
+    'Gladiator':       { base: 380000, taxa: 1.78, tipo: 'Pickup' }
   }
 };
 
-const CITIES = [
-  'Rio de Janeiro — RJ',
-  'São Paulo — SP',
-  'Belo Horizonte — MG',
-  'Curitiba — PR',
-  'Salvador — BA'
-];
-
-/* City multipliers to create regional variation */
-const CITY_FACTORS = {
-  'Rio de Janeiro — RJ':  { price: 1.00, rate: 1.00, vol: 1.00 },
-  'São Paulo — SP':       { price: 0.98, rate: 0.95, vol: 1.45 },
-  'Belo Horizonte — MG':  { price: 1.02, rate: 1.02, vol: 0.70 },
-  'Curitiba — PR':        { price: 0.99, rate: 0.98, vol: 0.60 },
-  'Salvador — BA':        { price: 1.04, rate: 1.05, vol: 0.50 }
+/* ── Geography: States and Cities ── */
+const STATES_CITIES = {
+  'SP': ['São Paulo', 'Campinas', 'Ribeirão Preto', 'São José dos Campos', 'Sorocaba'],
+  'RJ': ['Rio de Janeiro', 'Niterói', 'Petrópolis'],
+  'MG': ['Belo Horizonte', 'Uberlândia', 'Juiz de Fora'],
+  'PR': ['Curitiba', 'Londrina', 'Maringá'],
+  'SC': ['Florianópolis', 'Joinville', 'Blumenau'],
+  'RS': ['Porto Alegre', 'Caxias do Sul'],
+  'BA': ['Salvador', 'Feira de Santana'],
+  'PE': ['Recife', 'Caruaru'],
+  'CE': ['Fortaleza'],
+  'DF': ['Brasília'],
+  'GO': ['Goiânia', 'Anápolis'],
+  'PA': ['Belém'],
+  'AM': ['Manaus'],
+  'MT': ['Cuiabá'],
+  'MS': ['Campo Grande'],
+  'ES': ['Vitória'],
+  'MA': ['São Luís'],
+  'RN': ['Natal'],
+  'AL': ['Maceió'],
+  'PI': ['Teresina'],
+  'SE': ['Aracaju'],
+  'TO': ['Palmas'],
+  'RO': ['Porto Velho'],
+  'AC': ['Rio Branco'],
+  'AP': ['Macapá'],
+  'RR': ['Boa Vista'],
+  'PB': ['João Pessoa']
 };
 
-/* Deterministic seeded random (mulberry32) to keep data stable across reloads */
+const STATE_FACTORS = {
+  'SP':{p:0.98,r:0.95,v:1.45},'RJ':{p:1.00,r:1.00,v:1.00},'MG':{p:1.02,r:1.02,v:0.70},
+  'PR':{p:0.99,r:0.98,v:0.60},'SC':{p:0.99,r:0.97,v:0.50},'RS':{p:1.01,r:1.00,v:0.55},
+  'BA':{p:1.04,r:1.05,v:0.50},'PE':{p:1.05,r:1.06,v:0.40},'CE':{p:1.06,r:1.07,v:0.35},
+  'DF':{p:1.01,r:0.98,v:0.55},'GO':{p:1.03,r:1.03,v:0.40},'PA':{p:1.08,r:1.10,v:0.25},
+  'AM':{p:1.10,r:1.12,v:0.20},'MT':{p:1.04,r:1.04,v:0.30},'MS':{p:1.03,r:1.03,v:0.28},
+  'ES':{p:1.01,r:1.01,v:0.35},'MA':{p:1.07,r:1.08,v:0.22},'RN':{p:1.05,r:1.06,v:0.20},
+  'AL':{p:1.06,r:1.07,v:0.18},'PI':{p:1.08,r:1.09,v:0.15},'SE':{p:1.05,r:1.06,v:0.15},
+  'TO':{p:1.07,r:1.08,v:0.12},'RO':{p:1.08,r:1.09,v:0.12},'AC':{p:1.10,r:1.12,v:0.08},
+  'AP':{p:1.12,r:1.14,v:0.07},'RR':{p:1.12,r:1.14,v:0.06},'PB':{p:1.05,r:1.06,v:0.18}
+};
+
+/* ── Bank tier modifiers ── */
+const BANK_TIERS = {
+  'tier1': { label: 'Tier 1 (Itaú, Bradesco, Santander, BB, Caixa)', rateAdj: 0.88, volPct: 0.62 },
+  'tier2': { label: 'Tier 2 (BV, Pan, Safra, Omni, Votorantim)',     rateAdj: 1.15, volPct: 0.38 }
+};
+
+/* ── Seeded random ── */
 function seededRandom(seed) {
   let t = seed + 0x6D2B79F5;
   t = Math.imul(t ^ (t >>> 15), t | 1);
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
-
 function hashStr(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
   return Math.abs(h);
 }
 
-/* Generate a full data entry for any combination */
-function generateEntry(brand, model, city) {
+/* ── Data generation ── */
+function generateEntry(brand, model, state, city, bankTier) {
   const spec = BRAND_MODELS[brand][model];
-  const cf = CITY_FACTORS[city];
-  const seed = hashStr(brand + model + city);
+  const sf = STATE_FACTORS[state] || {p:1,r:1,v:0.15};
+  const tierKey = bankTier || '';
+  const seed = hashStr(brand + model + state + city + tierKey);
   const r = (i) => seededRandom(seed + i);
 
-  /* Vehicle price with city and small random variation */
-  const basePrice = spec.base * cf.price;
-  const veiculo = Math.round(basePrice * (0.96 + r(0) * 0.08) / 100) * 100;
+  let rateAdj = 1, volAdj = 1;
+  if (bankTier && BANK_TIERS[bankTier]) {
+    rateAdj = BANK_TIERS[bankTier].rateAdj;
+    volAdj = BANK_TIERS[bankTier].volPct;
+  }
 
-  /* Financed amount: 50-70% of vehicle */
+  const basePrice = spec.base * sf.p;
+  const veiculo = Math.round(basePrice * (0.96 + r(0) * 0.08) / 100) * 100;
   const finPct = 0.50 + r(1) * 0.20;
   const financiado = Math.round(veiculo * finPct / 100) * 100;
-
-  /* Interest rate */
-  const taxa = Math.round((spec.taxa * cf.rate * (0.94 + r(2) * 0.12)) * 100) / 100;
-
-  /* Median installments */
+  const taxa = Math.round((spec.taxa * sf.r * rateAdj * (0.94 + r(2) * 0.12)) * 100) / 100;
   const medianParcelas = r(3) > 0.5 ? 48 : 60;
-
-  /* Monthly payment approximation */
   const monthlyRate = taxa / 100;
   const parcela = Math.round(financiado * monthlyRate / (1 - Math.pow(1 + monthlyRate, -medianParcelas)) / 10) * 10;
-
-  /* Contract count: larger cities + cheaper cars = more volume */
   const baseCount = Math.round(400 + r(4) * 800);
   const priceVolFactor = spec.base < 150000 ? 1.4 : spec.base < 250000 ? 1.0 : 0.7;
-  const count = Math.max(32, Math.round(baseCount * cf.vol * priceVolFactor));
+  const count = Math.max(32, Math.round(baseCount * sf.v * priceVolFactor * volAdj));
 
-  /* Percentiles for vehicle price */
   const vP50 = veiculo - Math.round(veiculo * 0.02 / 1000) * 1000;
   const vP25 = Math.round(vP50 * (0.91 + r(5) * 0.03) / 1000) * 1000;
   const vP75 = Math.round(vP50 * (1.06 + r(6) * 0.04) / 1000) * 1000;
   const vP5  = Math.round(vP50 * (0.80 + r(7) * 0.05) / 1000) * 1000;
   const vP95 = Math.round(vP50 * (1.18 + r(8) * 0.08) / 1000) * 1000;
 
-  /* Percentiles for financed value */
   const fP50 = financiado;
   const fP25 = Math.round(fP50 * (0.68 + r(9) * 0.08) / 1000) * 1000;
   const fP75 = Math.round(fP50 * (1.20 + r(10) * 0.10) / 1000) * 1000;
   const fP5  = Math.round(fP50 * (0.35 + r(11) * 0.15) / 1000) * 1000;
   const fP95 = Math.round(fP50 * (1.50 + r(12) * 0.20) / 1000) * 1000;
 
-  /* Percentiles for parcelas */
   const parcP5 = 12, parcP25 = 36, parcP50 = medianParcelas, parcP75 = 60, parcP95 = 60;
-
-  /* Percentiles for taxa */
   const tP50 = taxa;
   const tP25 = Math.round((taxa * 0.82 + r(13) * 0.04) * 100) / 100;
   const tP5  = Math.round((taxa * 0.60 + r(14) * 0.08) * 100) / 100;
   const tP75 = Math.round((taxa * 1.15 + r(15) * 0.08) * 100) / 100;
   const tP95 = Math.round((taxa * 1.45 + r(16) * 0.15) * 100) / 100;
 
-  /* Taxa histogram: bell-shaped around the median */
   const rawHist = [
     { faixa: '0.5–0.99', w: 3 + r(17) * 6 },
     { faixa: '1.00–1.29', w: 12 + r(18) * 12 },
@@ -498,13 +604,13 @@ function generateEntry(brand, model, city) {
   ];
   const totalW = rawHist.reduce((s, h) => s + h.w, 0);
   const taxaHist = rawHist.map(h => ({ faixa: h.faixa, pct: Math.round(h.w / totalW * 100) }));
-  /* Normalize to 100% */
   const histSum = taxaHist.reduce((s, h) => s + h.pct, 0);
   taxaHist[2].pct += (100 - histSum);
 
   return {
-    count,
+    count, medianParcelas,
     kpi: { veiculo, financiado, parcela, taxa },
+    ltv: Math.round(financiado / veiculo * 100),
     percentis: {
       'Valor do veículo (R$)':  { p5: vP5, p25: vP25, p50: vP50, p75: vP75, p95: vP95, color: '#7AA31A' },
       'Valor financiado (R$)':  { p5: fP5, p25: fP25, p50: fP50, p75: fP75, p95: fP95, color: '#8DB522' },
@@ -515,16 +621,77 @@ function generateEntry(brand, model, city) {
   };
 }
 
-/* Build the full DATA object for every brand+model+city combination */
-const DATA = {};
-for (const brand of Object.keys(BRAND_MODELS)) {
-  for (const model of Object.keys(BRAND_MODELS[brand])) {
-    for (const city of CITIES) {
-      DATA[brand + '|' + model + '|' + city] = generateEntry(brand, model, city);
-    }
-  }
+/* ── Populate state/city dropdowns ── */
+function populateGeo() {
+  const selEstado = document.getElementById('sel-estado');
+  selEstado.innerHTML = '<option value="all">Todos</option>';
+  Object.keys(STATES_CITIES).sort().forEach(uf => {
+    const o = document.createElement('option');
+    o.value = uf; o.textContent = uf;
+    selEstado.appendChild(o);
+  });
+  updateCityOptions();
 }
 
+function updateCityOptions() {
+  const uf = document.getElementById('sel-estado').value;
+  const selCidade = document.getElementById('sel-cidade');
+  selCidade.innerHTML = '';
+  if (uf === 'all') {
+    const opt = document.createElement('option');
+    opt.value = 'all'; opt.textContent = 'Todas';
+    selCidade.appendChild(opt);
+    for (const st of Object.keys(STATES_CITIES).sort()) {
+      STATES_CITIES[st].forEach(c => {
+        const o = document.createElement('option');
+        o.value = c + ' — ' + st; o.textContent = c + ' — ' + st;
+        selCidade.appendChild(o);
+      });
+    }
+  } else {
+    const opt = document.createElement('option');
+    opt.value = 'all'; opt.textContent = 'Todas as cidades';
+    selCidade.appendChild(opt);
+    (STATES_CITIES[uf] || []).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c + ' — ' + uf; o.textContent = c;
+      selCidade.appendChild(o);
+    });
+  }
+}
+document.getElementById('sel-estado').addEventListener('change', updateCityOptions);
+
+/* ── Dynamic model dropdown based on brand + type filter ── */
+function updateModelOptions() {
+  const brand = document.getElementById('sel-marca').value;
+  const tipo = document.getElementById('sel-tipo').value;
+  const modelSel = document.getElementById('sel-modelo');
+  const models = Object.entries(BRAND_MODELS[brand] || {});
+  modelSel.innerHTML = '';
+  models.forEach(([m, spec]) => {
+    if (tipo !== 'all' && spec.tipo !== tipo) return;
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + ' (' + spec.tipo + ')';
+    modelSel.appendChild(opt);
+  });
+  if (modelSel.options.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = ''; opt.textContent = 'Nenhum modelo deste tipo';
+    modelSel.appendChild(opt);
+  }
+}
+document.getElementById('sel-marca').addEventListener('change', updateModelOptions);
+document.getElementById('sel-tipo').addEventListener('change', updateModelOptions);
+
+/* ── Tab switching ── */
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  document.querySelector('.tab-btn[onclick*="' + id + '"]').classList.add('active');
+}
+
+/* ── Rendering functions ── */
 let chartDist = null, chartTaxa = null;
 
 function renderPercentileTable(percentis) {
@@ -605,48 +772,162 @@ function renderCharts(data) {
   });
 }
 
-/* ── Dynamic model dropdown based on selected brand ── */
-function updateModelOptions() {
-  const brand = document.getElementById('sel-marca').value;
-  const modelSel = document.getElementById('sel-modelo');
-  const models = Object.keys(BRAND_MODELS[brand] || {});
-  modelSel.innerHTML = '';
-  models.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = m;
-    modelSel.appendChild(opt);
-  });
-}
-document.getElementById('sel-marca').addEventListener('change', updateModelOptions);
-/* Initialize on load */
-updateModelOptions();
-
+/* ── Main query ── */
 function runQuery() {
-  const key = document.getElementById('sel-marca').value+'|'+
-    document.getElementById('sel-modelo').value+'|'+document.getElementById('sel-cidade').value;
-  const data = DATA[key];
-  if (!data || data.count === 0) {
-    document.getElementById('results').innerHTML =
-      '<div style="text-align:center;padding:80px 20px">'+
-      '<div style="font-size:48px;color:var(--texto-hint);margin-bottom:16px">&#8709;</div>'+
-      '<p style="font-size:16px;color:var(--texto-secundario);margin-bottom:8px">Dados insuficientes para esta combinação</p>'+
-      '<p style="font-size:13px;color:var(--texto-muted)">Mínimo de 30 contratos necessários (n &lt; 30)</p></div>';
-    return;
+  const brand = document.getElementById('sel-marca').value;
+  const model = document.getElementById('sel-modelo').value;
+  if (!model) return;
+  const estadoVal = document.getElementById('sel-estado').value;
+  const cidadeVal = document.getElementById('sel-cidade').value;
+  const bancoVal = document.getElementById('sel-banco').value;
+  const periodo = document.getElementById('sel-periodo').value;
+
+  let state, city;
+  if (cidadeVal !== 'all') {
+    const parts = cidadeVal.split(' — ');
+    city = parts[0]; state = parts[1];
+  } else if (estadoVal !== 'all') {
+    state = estadoVal; city = STATES_CITIES[state][0];
+  } else {
+    state = 'SP'; city = 'São Paulo';
   }
-  document.getElementById('res-title').textContent =
-    document.getElementById('sel-marca').value+' '+document.getElementById('sel-modelo').value;
-  document.getElementById('res-count').textContent = data.count.toLocaleString('pt-BR')+' contratos';
-  document.getElementById('res-sub').textContent =
-    document.getElementById('sel-cidade').value+' · '+document.getElementById('sel-periodo').value+' · Dados anonimizados (n ≥ 30)';
-  document.getElementById('kpi-veiculo').textContent = 'R$ '+data.kpi.veiculo.toLocaleString('pt-BR');
-  document.getElementById('kpi-financiado').textContent = 'R$ '+data.kpi.financiado.toLocaleString('pt-BR');
-  document.getElementById('kpi-parcela').textContent = 'R$ '+data.kpi.parcela.toLocaleString('pt-BR');
-  document.getElementById('kpi-taxa').textContent = data.kpi.taxa.toFixed(2).replace('.',',')+' % a.m.';
+
+  const banco = bancoVal === 'all' ? null : bancoVal;
+  const data = generateEntry(brand, model, state, city, banco);
+
+  const bancoLabel = banco ? ' · ' + BANK_TIERS[banco].label : '';
+  const locLabel = city + ' — ' + state;
+
+  document.getElementById('res-title').textContent = brand + ' ' + model;
+  document.getElementById('res-count').textContent = data.count.toLocaleString('pt-BR') + ' contratos';
+  document.getElementById('res-sub').textContent = locLabel + ' · ' + periodo + bancoLabel + ' · Dados anonimizados (n ≥ 30)';
+  document.getElementById('kpi-veiculo').textContent = 'R$ ' + data.kpi.veiculo.toLocaleString('pt-BR');
+  document.getElementById('kpi-veiculo-sub').textContent = 'Mediana R$ ' + data.percentis['Valor do veículo (R$)'].p50.toLocaleString('pt-BR');
+  document.getElementById('kpi-financiado').textContent = 'R$ ' + data.kpi.financiado.toLocaleString('pt-BR');
+  document.getElementById('kpi-financiado-sub').textContent = data.ltv + '% do valor do veículo (LTV)';
+  document.getElementById('kpi-parcela').textContent = 'R$ ' + data.kpi.parcela.toLocaleString('pt-BR');
+  document.getElementById('kpi-parcela-sub').textContent = data.medianParcelas + ' parcelas (mediana)';
+  document.getElementById('kpi-taxa').textContent = data.kpi.taxa.toFixed(2).replace('.',',') + ' % a.m.';
+  document.getElementById('kpi-taxa-sub').textContent = '≈ ' + (Math.pow(1 + data.kpi.taxa/100, 12) * 100 - 100).toFixed(1).replace('.',',') + '% a.a.';
+
   renderPercentileTable(data.percentis);
   renderBoxPlots(data.percentis);
   renderCharts(data);
 }
+
+/* ── Comparison tab ── */
+let cmpSlotCount = 2;
+const CMP_COLORS = ['#7AA31A','#2968A8','#C08B18','#C9403A','#8DB522'];
+
+function initCompareSlot(idx) {
+  const marca = document.querySelector('#cmp-slot-'+idx+' .cmp-marca');
+  const modelo = document.querySelector('#cmp-slot-'+idx+' .cmp-modelo');
+  const cidade = document.querySelector('#cmp-slot-'+idx+' .cmp-cidade');
+  function updateModels() {
+    const brand = marca.value;
+    modelo.innerHTML = '';
+    Object.keys(BRAND_MODELS[brand] || {}).forEach(m => {
+      const o = document.createElement('option'); o.value = m; o.textContent = m;
+      modelo.appendChild(o);
+    });
+  }
+  function updateCities() {
+    cidade.innerHTML = '';
+    for (const st of Object.keys(STATES_CITIES).sort()) {
+      STATES_CITIES[st].forEach(c => {
+        const o = document.createElement('option');
+        o.value = c + '|' + st; o.textContent = c + ' — ' + st;
+        cidade.appendChild(o);
+      });
+    }
+  }
+  marca.addEventListener('change', updateModels);
+  updateModels();
+  updateCities();
+}
+
+function addCompareSlot() {
+  if (cmpSlotCount >= 5) return;
+  const container = document.getElementById('cmp-selectors');
+  const btn = container.querySelector('.cmp-add-btn');
+  const idx = cmpSlotCount++;
+  const div = document.createElement('div');
+  div.className = 'cmp-slot'; div.id = 'cmp-slot-' + idx; div.style.position = 'relative';
+  div.innerHTML = '<button class="cmp-remove" onclick="removeCompareSlot('+idx+')">&times;</button>' +
+    '<h4>Modelo ' + String.fromCharCode(65+idx) + '</h4>' +
+    '<select class="cmp-marca" data-idx="'+idx+'"><option>Toyota</option><option>BYD</option><option>Volkswagen</option><option>Honda</option><option>Hyundai</option><option>Stellantis (Fiat)</option><option>Stellantis (Jeep)</option></select>' +
+    '<select class="cmp-modelo" data-idx="'+idx+'"></select>' +
+    '<select class="cmp-cidade" data-idx="'+idx+'"></select>';
+  container.insertBefore(div, btn);
+  initCompareSlot(idx);
+}
+
+function removeCompareSlot(idx) {
+  const el = document.getElementById('cmp-slot-' + idx);
+  if (el) el.remove();
+}
+
+function runCompare() {
+  const slots = document.querySelectorAll('.cmp-slot');
+  const entries = [];
+  slots.forEach(slot => {
+    const marca = slot.querySelector('.cmp-marca').value;
+    const modelo = slot.querySelector('.cmp-modelo').value;
+    const cidadeRaw = slot.querySelector('.cmp-cidade').value;
+    if (!modelo || !cidadeRaw) return;
+    const [city, state] = cidadeRaw.split('|');
+    const data = generateEntry(marca, modelo, state, city, null);
+    entries.push({ label: marca + ' ' + modelo, city: city + ' — ' + state, data });
+  });
+
+  if (entries.length < 2) {
+    document.getElementById('cmp-results').innerHTML = '<p style="color:var(--texto-muted)">Selecione ao menos 2 modelos para comparar.</p>';
+    return;
+  }
+
+  const fmtR = v => 'R$ ' + v.toLocaleString('pt-BR');
+  const fmtP = v => v.toFixed(2).replace('.',',') + '%';
+
+  const metrics = [
+    { name: 'Preço médio', get: e => e.data.kpi.veiculo, fmt: fmtR, best: 'low' },
+    { name: 'Financiado', get: e => e.data.kpi.financiado, fmt: fmtR, best: 'low' },
+    { name: 'LTV', get: e => e.data.ltv, fmt: v => v + '%', best: 'high' },
+    { name: 'Prazo (mediana)', get: e => e.data.medianParcelas, fmt: v => v + ' meses', best: null },
+    { name: 'Parcela média', get: e => e.data.kpi.parcela, fmt: fmtR, best: 'low' },
+    { name: 'Taxa mensal', get: e => e.data.kpi.taxa, fmt: fmtP, best: 'low' },
+    { name: 'Taxa anual', get: e => (Math.pow(1 + e.data.kpi.taxa/100, 12) * 100 - 100), fmt: v => v.toFixed(1).replace('.',',') + '%', best: 'low' },
+    { name: 'Contratos', get: e => e.data.count, fmt: v => v.toLocaleString('pt-BR'), best: 'high' },
+  ];
+
+  let html = '<div class="ptable-wrap"><table class="cmp-table"><thead><tr><th>Parâmetro</th>';
+  entries.forEach((e, i) => {
+    html += '<th style="border-bottom:3px solid '+CMP_COLORS[i%5]+'">'+e.label+'<br><span style="font-weight:normal;font-size:9px;color:var(--texto-muted)">'+e.city+'</span></th>';
+  });
+  html += '</tr></thead><tbody>';
+
+  metrics.forEach(m => {
+    const vals = entries.map(e => m.get(e));
+    const bestVal = m.best === 'low' ? Math.min(...vals) : m.best === 'high' ? Math.max(...vals) : null;
+    const worstVal = m.best === 'low' ? Math.max(...vals) : m.best === 'high' ? Math.min(...vals) : null;
+    html += '<tr><td style="font-weight:bold;color:var(--texto-secundario)">'+m.name+'</td>';
+    vals.forEach(v => {
+      let cls = '';
+      if (bestVal !== null && v === bestVal) cls = ' class="best"';
+      else if (worstVal !== null && v === worstVal) cls = ' class="worst"';
+      html += '<td'+cls+'>'+m.fmt(v)+'</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+
+  document.getElementById('cmp-results').innerHTML = html;
+}
+
+/* ── Init ── */
+populateGeo();
+updateModelOptions();
+initCompareSlot(0);
+initCompareSlot(1);
 runQuery();
 </script>
 </body>
